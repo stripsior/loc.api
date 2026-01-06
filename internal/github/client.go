@@ -11,7 +11,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const MaxRepoSizeMB = 500
+const MaxRepoSizeMB = 1024
 const MaxRepoSizeKB = MaxRepoSizeMB * 1024
 
 type Client struct {
