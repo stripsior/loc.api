@@ -57,6 +57,12 @@ func CountLines(filePath string, language string) (*LineStats, error) {
 	syntax := commentSyntaxMap[language]
 
 	scanner := bufio.NewScanner(file)
+	// Increase buffer size to handle files with very long lines (e.g., minified SVG files)
+	// Default is 64KB, we set it to 10MB to handle edge cases
+	const maxScanTokenSize = 10 * 1024 * 1024 // 10MB
+	buf := make([]byte, maxScanTokenSize)
+	scanner.Buffer(buf, maxScanTokenSize)
+
 	inMultiLineComment := false
 	currentMultiLineEnd := ""
 

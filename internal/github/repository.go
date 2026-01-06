@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
-func CloneRepository(owner, repo, branch, token string, includeAuthors bool) (string, error) {
+func CloneRepository(ctx context.Context, owner, repo, branch, token string, includeAuthors bool) (string, error) {
 	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("loc-api-%s-%s-*", owner, repo))
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp directory: %w", err)
@@ -36,7 +37,8 @@ func CloneRepository(owner, repo, branch, token string, includeAuthors bool) (st
 		}
 	}
 
-	_, err = git.PlainClone(tmpDir, false, cloneOptions)
+	// Clone with context support for timeout/cancellation
+	_, err = git.PlainCloneContext(ctx, tmpDir, false, cloneOptions)
 	if err != nil {
 		os.RemoveAll(tmpDir)
 		return "", fmt.Errorf("failed to clone repository: %w", err)

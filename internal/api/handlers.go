@@ -91,7 +91,7 @@ func analyzeRepository(c *gin.Context) {
 
 	isPrivate := ghRepo.Private != nil && *ghRepo.Private
 
-	repoPath, err := github.CloneRepository(owner, repo, branch, token, req.IncludeAuthors)
+	repoPath, err := github.CloneRepository(c.Request.Context(), owner, repo, branch, token, req.IncludeAuthors)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Error:   "clone_failed",

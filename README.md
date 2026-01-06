@@ -43,6 +43,23 @@ The API uses environment variables for configuration. You can set them directly 
 - `GITHUB_TOKEN` - GitHub personal access token (optional, used as fallback when token is not provided in request body)
 - `CACHE_TTL_MINUTES` - Cache TTL in minutes (default: 60)
 - `CORS_ALLOW_ORIGIN` - Allowed CORS origins, comma-separated (default: `*` for all origins)
+- `REDIS_URL` - Redis connection URL for distributed caching (optional, defaults to in-memory cache)
+
+#### HTTP Timeout Configuration (for Large Repositories)
+
+These settings control how long the server will wait for operations to complete. Increase these values when analyzing very large repositories:
+
+- `HTTP_READ_TIMEOUT_SECONDS` - Maximum time to read request (default: 300 = 5 minutes)
+- `HTTP_WRITE_TIMEOUT_SECONDS` - Maximum time to write response (default: 600 = 10 minutes)
+- `HTTP_IDLE_TIMEOUT_SECONDS` - Maximum idle time between requests (default: 120 = 2 minutes)
+
+**Recommended values for large repositories (>1GB):**
+
+```env
+HTTP_READ_TIMEOUT_SECONDS=600     # 10 minutes
+HTTP_WRITE_TIMEOUT_SECONDS=1800   # 30 minutes
+HTTP_IDLE_TIMEOUT_SECONDS=300     # 5 minutes
+```
 
 ### Using .env File
 
