@@ -51,12 +51,20 @@ func main() {
 		}
 	}
 
+	maxFilesForAuthorAnalysis := 1024
+	if limitEnv := os.Getenv("MAX_FILES_FOR_AUTHOR_ANALYSIS"); limitEnv != "" {
+		if limit, err := strconv.Atoi(limitEnv); err == nil && limit > 0 {
+			maxFilesForAuthorAnalysis = limit
+		}
+	}
+
 	router := api.SetupRouter(cacheTTL)
 
 	addr := fmt.Sprintf(":%s", port)
 	log.Printf("Starting LOC Counter API on %s", addr)
 	log.Printf("Cache TTL: %s", cacheTTL)
 	log.Printf("HTTP Timeouts - Read: %s, Write: %s, Idle: %s", readTimeout, writeTimeout, idleTimeout)
+	log.Printf("Max files for author analysis: %d", maxFilesForAuthorAnalysis)
 	log.Printf("Health check: http://localhost%s/health", addr)
 	log.Printf("Cache stats: http://localhost%s/cache/stats", addr)
 	log.Printf("Analyze endpoint: POST http://localhost%s/api/analyze", addr)

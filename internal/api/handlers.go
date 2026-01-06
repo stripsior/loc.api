@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +13,18 @@ import (
 	"github.com/stripsior/loc.api/internal/github"
 	"github.com/stripsior/loc.api/internal/models"
 )
+
+// getMaxFilesForAuthorAnalysis returns the maximum number of files allowed for author analysis
+// from the environment variable MAX_FILES_FOR_AUTHOR_ANALYSIS, defaulting to 1024
+func getMaxFilesForAuthorAnalysis() int {
+	defaultLimit := 1024
+	if limitEnv := os.Getenv("MAX_FILES_FOR_AUTHOR_ANALYSIS"); limitEnv != "" {
+		if limit, err := strconv.Atoi(limitEnv); err == nil && limit > 0 {
+			return limit
+		}
+	}
+	return defaultLimit
+}
 
 func analyzeRepository(c *gin.Context) {
 	var req models.AnalyzeRequest
@@ -113,7 +127,9 @@ func analyzeRepository(c *gin.Context) {
 		return
 	}
 
-	if req.IncludeAuthors {
+	// Only perform author analysis if requested and file count is within limits
+	maxFilesForAuthorAnalysis := getMaxFilesForAuthorAnalysis()
+	if req.IncludeAuthors && result.Summary.TotalFiles <= maxFilesForAuthorAnalysis {
 		authorStats, err := analyzer.AnalyzeAuthors(repoPath, result.Files)
 		if err == nil {
 			totalLines := result.Summary.TotalLines
