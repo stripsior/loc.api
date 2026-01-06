@@ -1,0 +1,23 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+vendor/
+
+# Binaries
+loc-api
+main
+*.exe
+*.test
+
+# Environment
+.env
+.env.local
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Temp
+tmp/

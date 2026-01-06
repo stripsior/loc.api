@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: loc-api
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    env_file:
+      - .env
+    environment:
+      - PORT=${PORT:-8080}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - CACHE_TTL_MINUTES=${CACHE_TTL_MINUTES:-60}
+      - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-*}
+    restart: unless-stopped
+    volumes:
+      # Mount /tmp to persist or better manage temporary clones
+      - loc_api_tmp:/tmp
+
+volumes:
+  loc_api_tmp:
+    driver: local
