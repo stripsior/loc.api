@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stripsior/loc.api/internal/analyzer"
@@ -22,22 +23,6 @@ func analyzeRepository(c *gin.Context) {
 		return
 	}
 
-	hasToken := req.Token != ""
-	cacheKey := cache.GenerateCacheKey(req.Repository, req.Branch, hasToken, req.IncludeAuthors, req.Filters)
-
-	cacheInstance, exists := c.Get("cache")
-	if exists {
-		if resultCache, ok := cacheInstance.(*cache.Cache); ok {
-			if cachedResult, found := resultCache.Get(cacheKey); found {
-				c.Header("X-Cache", "HIT")
-				c.JSON(http.StatusOK, cachedResult)
-				return
-			}
-		}
-	}
-
-	c.Header("X-Cache", "MISS")
-
 	owner, repo, err := github.ParseRepository(req.Repository)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
@@ -46,6 +31,10 @@ func analyzeRepository(c *gin.Context) {
 		})
 		return
 	}
+
+	// Normalize to lowercase for consistent cache keys
+	owner = strings.ToLower(owner)
+	repo = strings.ToLower(repo)
 
 	token := req.Token
 	if token == "" {
@@ -70,6 +59,27 @@ func analyzeRepository(c *gin.Context) {
 		return
 	}
 
+	branch := req.Branch
+	if branch == "" {
+		branch = github.GetDefaultBranch(ghRepo)
+	}
+
+	// Generate cache key after normalizing owner, repo and resolving branch
+	cacheKey := cache.GenerateCacheKey(owner, repo, branch, req.IncludeAuthors, req.Filters)
+
+	cacheInstance, exists := c.Get("cache")
+	if exists {
+		if resultCache, ok := cacheInstance.(cache.Cache); ok {
+			if cachedResult, found := resultCache.Get(cacheKey); found {
+				c.Header("X-Cache", "HIT")
+				c.JSON(http.StatusOK, cachedResult)
+				return
+			}
+		}
+	}
+
+	c.Header("X-Cache", "MISS")
+
 	branches, err := ghClient.GetBranches(owner, repo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
@@ -80,11 +90,6 @@ func analyzeRepository(c *gin.Context) {
 	}
 
 	isPrivate := ghRepo.Private != nil && *ghRepo.Private
-
-	branch := req.Branch
-	if branch == "" {
-		branch = github.GetDefaultBranch(ghRepo)
-	}
 
 	repoPath, err := github.CloneRepository(owner, repo, branch, token, req.IncludeAuthors)
 	if err != nil {
@@ -141,7 +146,7 @@ func analyzeRepository(c *gin.Context) {
 	}
 
 	if exists {
-		if resultCache, ok := cacheInstance.(*cache.Cache); ok {
+		if resultCache, ok := cacheInstance.(cache.Cache); ok {
 			resultCache.Set(cacheKey, result)
 		}
 	}

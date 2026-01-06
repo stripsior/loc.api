@@ -11,13 +11,27 @@ services:
     environment:
       - PORT=${PORT:-8080}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - CACHE_TTL_MINUTES=${CACHE_TTL_MINUTES:-60}
       - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-*}
     restart: unless-stopped
+    depends_on:
+      - redis
     volumes:
       # Mount /tmp to persist or better manage temporary clones
       - loc_api_tmp:/tmp
 
+  redis:
+    image: redis:alpine
+    container_name: loc-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
 volumes:
   loc_api_tmp:
+    driver: local
+  redis_data:
     driver: local

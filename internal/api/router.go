@@ -32,7 +32,17 @@ func SetupRouter(cacheTTL time.Duration) *gin.Engine {
 
 	router.Use(cors.New(corsConfig))
 
-	resultCache := cache.NewCache(cacheTTL)
+	var resultCache cache.Cache
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL != "" {
+		var err error
+		resultCache, err = cache.NewRedisCache(redisURL, cacheTTL)
+		if err != nil {
+			resultCache = cache.NewMemoryCache(cacheTTL)
+		}
+	} else {
+		resultCache = cache.NewMemoryCache(cacheTTL)
+	}
 
 	router.Use(func(c *gin.Context) {
 		c.Set("cache", resultCache)
